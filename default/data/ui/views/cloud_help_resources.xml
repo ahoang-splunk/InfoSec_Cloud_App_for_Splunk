@@ -1,0 +1,38 @@
+<dashboard version="1.1" hideFilters="true" theme="dark">
+  <label>Additional Resources</label>
+  <row>
+    <panel>
+      <html>
+        <h1>More Security Use Cases</h1>
+        <p>Hundreds of additional security usecases are available in the free <a href="https://splunkbase.splunk.com/app/3435/" target="_blank">Splunk Security Essentials app</a>. Some of the usecases from Security Essentials app are already implemented here under Advanced Threats in this app.</p>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <h1>Adding Your Data</h1>
+        <p>Refer to Splunk Documentation and Splunkbase:</p>
+        <ul>  
+        <li><a href="https://docs.splunk.com/Documentation/AddOns/released/Firehose" target="_blank">Splunk AWS Kinesis Firehose Add-on</a></li>
+        <li><a href="https://docs.splunk.com/Documentation/AddOns/released/AWS" target="_blank">Splunk AWS Add-on</a></li>
+        <li><a href="https://splunkbase.splunk.com/app/3757/#/details" target="_blank">Splunk Microsoft Azure Add-on</a></li>
+        <li><a href="https://docs.splunk.com/Documentation/AddOns/released/GoogleCloud" target="_blank">Splunk GCP Add-on</a></li>
+        </ul>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <h1>Other Splunk Resources</h1>
+        <ul>  
+        <li><a href="https://community.splunk.com" target="_blank">Splunk Community (formerly known as Splunk Answers)</a></li>
+        <li><a href="https://docs.splunk.com" target="_blank">Splunk Documentation</a></li>
+        <li><a href="https://splunkbase.splunk.com" target="_blank">Splunkbase</a></li>
+        <li><a href="https://www.splunk.com/en_us/training/free-courses/splunk-fundamentals-1.html" target="_blank">Free Splunk Training</a></li>
+        </ul>
+      </html>
+    </panel>
+  </row>
+</dashboard>

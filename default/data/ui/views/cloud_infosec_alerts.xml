@@ -1,0 +1,119 @@
+<form version="1.1" theme="dark">
+  <label>Alerts</label>
+  <fieldset submitButton="false">
+    <input type="time" token="field1">
+      <label></label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>List of Triggered Alerts</title>
+      <table>
+        <search>
+          <query>index=_audit action="alert_fired" 
+| rename ss_name AS alert
+| eval severity=case(severity==1,"Informational",severity==2,"Low",severity==3,"Medium",severity==4,"High",severity==5,"Critical") 
+| table _time, alert, severity, alert_actions</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="count">10</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">false</option>
+        <format type="color" field="severity">
+          <colorPalette type="map">{"Critical":#D25B3B,"High":#FF8800,"Medium":#F0BE1B,"Low":#F8EE77,"Informational":#006D9C,"Unknown":#999999}</colorPalette>
+        </format>
+        <format type="color" field="triggered_alerts">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <drilldown>
+          <link target="_blank">/alerts/InfoSec_Cloud_App_for_Splunk/</link>
+        </drilldown>
+      </table>
+    </panel>
+    <panel>
+      <title>Triggered Alerts over Time</title>
+      <chart>
+        <search>
+          <query>index=_audit action="alert_fired" 
+ | rename ss_name AS title 
+ | timechart count by title</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+          <refresh>5m</refresh>
+          <refreshType>delay</refreshType>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="height">383</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <drilldown>
+          <link target="_blank">/alerts/InfoSec_Cloud_App_for_Splunk</link>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <h1>Configure Alerts</h1>
+        <p>
+          <a href="/manager/InfoSec_Cloud_App_for_Splunk/saved/searches?app=InfoSec_Cloud_App_for_Splunk&amp;itemType=alerts&amp;owner=anybody" target="_blank">Edit Existing Alerts</a>
+        </p>
+      </html>
+    </panel>
+    <panel>
+      <html>
+        <h1>Add Alerts</h1>
+        <p>To set up a new alert either:</p>
+        <ul>
+        <li>hover over a report you want to be alerted on and click on the magnifying glass icon to open a search; save the search: Save As &gt; Alert or</li>
+        <li>follow instructions in <a href="https://youtu.be/0REbozaALX0" target="_blank">this video</a>
+          </li>
+        </ul> 
+      </html>
+    </panel>
+  </row>
+</form>

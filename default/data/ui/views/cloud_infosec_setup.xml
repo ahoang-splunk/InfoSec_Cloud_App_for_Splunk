@@ -1,0 +1,53 @@
+<dashboard version="1.1" hideFilters="true" theme="dark">
+  <label>Setting up and Troubleshooting InfoSec Cloud App</label>
+  <row>
+    <panel>
+      <html>
+        <h1>Introduction</h1>
+        <p>The InfoSec Cloud app uses standard Splunk Enterprise/Splunk Cloud functionality, and additional free Splunk add-ons and vizualisations.
+        </p>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+        <h1>Before You Start Using InfoSec Cloud App</h1>
+        <h2>Required add-ons and apps:</h2>
+        <p>
+        <ul>  
+          <li>
+              <a href="https://splunkbase.splunk.com/app/1621/" target="_blank">Splunk Common Information Model (CIM) Add-on</a>
+            </li>  
+          <li>
+              <a href="https://splunkbase.splunk.com/app/3129/" target="_blank">Punchcard Visualization</a>
+          </li>
+          <li>
+              <a href="https://splunkbase.splunk.com/app/4438/" target="_blank">Network Diagram Visualization</a>
+          </li>
+          <li>
+              <a href="https://splunkbase.splunk.com/app/1724/" target="_blank">Lookup File Editor</a>
+          </li>
+        </ul> 
+        </p>
+        <h2>At a minimum, you should have the following data in Splunk before you can use the app:</h2>
+        <p>
+        <ul>  
+          <li>Alerts and events from your cloud providers like AWS, Azure and GCP</li>
+        </ul>
+        </p>
+        <p>Data you plan to use in the app must be mapped to the Spunk Common Information Model (CIM). Check whether add-ons you use for your data are CIM-compliant. If you are not sure, select Health from the main menu of the app to check what CIM comliant data you have in Splunk.</p>
+        <h2>The following Data Models must be accelerated (Settings &gt; Data models; for each data model: Edit (in Actions column) &gt; Edit Acceleration &gt; Accelerate (checkbox) &gt; Save):</h2>
+        <p>
+        <ul>  
+          <li>Alerts</li>
+          <li>Authentication</li>
+          <li>Change</li>
+          <li>Intrusion_Detection</li>
+          <li>Network_Traffic</li>
+        </ul>
+        </p>
+      </html>
+    </panel>
+  </row>
+</dashboard>

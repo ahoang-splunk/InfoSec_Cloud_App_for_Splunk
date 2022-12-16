@@ -1,0 +1,89 @@
+<form version="1.1" theme="dark">
+  <label>Identities and Assets</label>
+  <fieldset submitButton="false">
+    <input type="time" token="field1">
+      <label></label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Identities and the Number of Associated Events</title>
+      <table>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count as "event count" from datamodel=Authentication where `infosec-cloud-indexes` NOT Authentication.user =unknown groupby Authentication.user, sourcetype 
+| rename Authentication.user as user 
+| lookup cloud_vendor_services sourcetype OUTPUT vendor 
+| eval cloud=mvindex(vendor,0) 
+| table user, cloud, "event count" 
+| sort - "event count"</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">15</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="cloud">
+          <colorPalette type="map">{"AWS":#FF9900,"Azure":#008AD7,"GCP":#4285F4}</colorPalette>
+        </format>
+        <format type="color" field="events count">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#3C444D"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="color" field="event count">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="event count">
+          <option name="precision">0</option>
+        </format>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_user_investigation?drilldown_user=%22$click.value$%22</link>
+        </drilldown>
+      </table>
+    </panel>
+    <panel>
+      <title>Cloud Accounts Sending Events</title>
+      <table>
+        <search>
+          <query>| tstats summariesonly=t allow_old_summaries=t count as "event count" from datamodel=Authentication groupby Authentication.vendor_account, sourcetype
+| rename Authentication.vendor_account as account 
+| lookup cloud_vendor_services sourcetype OUTPUT vendor 
+| eval cloud=mvindex(vendor,0) 
+| table account, cloud, "event count" 
+| sort - "event count"</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">20</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">none</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="cloud">
+          <colorPalette type="map">{"AWS":#FF9900,"Azure":#008AD7,"GCP":#4285F4}</colorPalette>
+        </format>
+        <format type="color" field="event count">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="event count">
+          <option name="precision">0</option>
+        </format>
+      </table>
+    </panel>
+  </row>
+</form>

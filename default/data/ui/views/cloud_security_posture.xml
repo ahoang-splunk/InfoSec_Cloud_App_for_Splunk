@@ -1,0 +1,566 @@
+<dashboard version="1.1" hideFilters="true" theme="dark">
+  <label>Security Posture</label>
+  <!-- Two Dummy pannels below are not visible. Searches in the pannels are used to determine if there is a minimal number of CIM-compliant data sources available for the InfoSec app to populate its dashboards-->
+  <!-- Pannel with a warning is displayed if no CIM add-on is installed-->
+  <!-- Pannel with a warning is displayed if no cufient number of CIM-compliant data sources available-->
+  <row>
+    <panel depends="$dummy_token$">
+      <title>Hidden Panel Checking for CIM Add-on</title>
+      <table>
+        <search>
+          <done>
+            <condition match="'result.count' == &quot;0&quot;">
+              <set token="cim_add-on_missing">1</set>
+            </condition>
+          </done>
+          <query>| rest /services/apps/local splunk_server=local | search title="Splunk_SA_CIM" | stats count</query>
+          <earliest>-24h</earliest>
+          <latest>now</latest>
+        </search>
+      </table>
+    </panel>
+    <panel depends="$dummy_token$">
+      <title>Hidden Panel Checking for Basic CIM-compliant Accelerated Data Sources</title>
+      <table>
+        <search>
+          <done>
+            <condition match="'result.data_issue' &gt; 0">
+              <set token="data_quality_issue">1</set>
+            </condition>
+          </done>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Authentication 
+| eval data_issue=if(count&gt;1,0,1) 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true count from datamodel=Network_Traffic.All_Traffic 
+    | eval  data_issue=if(count&gt;100,0,1)] 
+| stats sum(data_issue) as data_issue</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+      </table>
+    </panel>
+    <panel depends="$dummy_token$">
+      <title>Hidden Panel Checking Which Cloud Providers' Data Is Present</title>
+      <table>
+        <search>
+          <query>| tstats count where `infosec-cloud-indexes` by sourcetype 
+| lookup cloud_vendor_services sourcetype OUTPUT vendor 
+| eval vendor=mvindex(vendor,0) 
+| stats values(vendor) as clouds 
+| eval aws=if(clouds="AWS",1,0), azure=if(clouds="Azure",1,0), gcp=if(clouds="GCP",1,0)</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <done>
+            <condition match="'result.aws' = 0 AND 'result.azure' = 0 AND 'result.gcp' = 0 ">
+              <set token="no_aws">$result.no_aws$</set>
+              <set token="no_azure">$result.no_azure</set>
+              <set token="no_gcp">$result.no_gcp$</set>
+            </condition>
+            <condition match="'result.aws' = 0 AND 'result.azure' = 0 AND 'result.gcp' = 1 ">
+              <set token="no_aws">$result.no_aws$</set>
+              <set token="no_azure">$result.no_azure</set>
+              <set token="gcp">$result.gcp$</set>
+            </condition>
+            <condition match="'result.aws' = 0 AND 'result.azure' = 1 AND 'result.gcp' = 0 ">
+              <set token="no_aws">$result.no_aws$</set>
+              <set token="azure">$result.azure</set>
+              <set token="no_gcp">$result.no_gcp$</set>
+            </condition>
+            <condition match="'result.aws' = 0 AND 'result.azure' = 1 AND 'result.gcp' = 1 ">
+              <set token="no_aws">$result.no_aws$</set>
+              <set token="azure">$result.azure</set>
+              <set token="gcp">$result.gcp$</set>
+            </condition>
+            <condition match="'result.aws' = 1 AND 'result.azure' = 0 AND 'result.gcp' = 0 ">
+              <set token="aws">$result.aws$</set>
+              <set token="no_azure">$result.no_azure</set>
+              <set token="no_gcp">$result.no_gcp$</set>
+            </condition>
+            <condition match="'result.aws' = 1 AND 'result.azure' = 0 AND 'result.gcp' = 1 ">
+              <set token="aws">$result.aws$</set>
+              <set token="no_azure">$result.no_azure</set>
+              <set token="gcp">$result.gcp$</set>
+            </condition>
+            <condition match="'result.aws' = 1 AND 'result.azure' = 1 AND 'result.gcp' = 0 ">
+              <set token="aws">$result.aws$</set>
+              <set token="azure">$result.azure</set>
+              <set token="no_gcp">$result.no_gcp$</set>
+            </condition>
+            <condition match="'result.aws' = 1 AND 'result.azure' = 1 AND 'result.gcp' = 1 ">
+              <set token="aws">$result.aws$</set>
+              <set token="azure">$result.azure</set>
+              <set token="gcp">$result.gcp$</set>
+            </condition>
+          </done>
+        </search>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$cim_add-on_missing$">
+      <html>
+        <p>
+          <img src="/static/app/InfoSec_Cloud_App_for_Splunk/images/warning.png" width="45"/>
+        </p>
+        <h1 style="color:OrangeRed">If you see this message, you still need to install <a href="https://splunkbase.splunk.com/app/1621" target="_blank">Splunk Common Information Model (CIM) Add-on</a>
+        </h1>
+        <h1 style="color:Grey">See more details on the <a href="/app/InfoSec_Cloud_Dev-main/cloud_infosec_stats" target="_blank">Health dashboard</a>
+        </h1>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$data_quality_issue$">
+      <html>
+          <p>
+          <img src="/static/app/InfoSec_Cloud_App_for_Splunk/images/warning.png" width="45"/>
+        </p>
+          <h1 style="color:OrangeRed">If you see this message, you still need to complete bringing your data into Splunk in a CIM-compliant way</h1>
+          <h1 style="color:Grey">See more details on the <a href="/app/InfoSec_Cloud_Dev-main/cloud_infosec_stats" target="_blank">Health dashboard</a>
+        </h1>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+          <h2>Cloud Providers Monitored</h2>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel depends="$aws$">
+      <html>
+        <h1 style="color:#FF9900;font-size:50px;"><center>AWS</center>
+        </h1>
+      </html>
+    </panel>
+    <panel depends="$no_aws$">
+      <html>
+        <h1 style="color:#4D4D4D;font-size:50px;"><center>AWS</center>
+        </h1>
+      </html>
+    </panel>
+    <panel depends="$azure$">
+      <html>
+        <h1 style="color:#008AD7;font-size:50px;"><center>Microsoft Azure</center>
+        </h1>
+      </html>
+    </panel>
+    <panel depends="$no_azure$">
+      <html>
+        <h1 style="color:#4D4D4D;font-size:50px;"><center>Microsoft Azure</center>
+        </h1>
+      </html>
+    </panel>
+    <panel depends="$gcp$">
+      <html>
+        <h1 style="color:#4285F4;font-size:50px;"><center>Google Cloud</center>
+        </h1>
+      </html>
+    </panel>
+    <panel depends="$no_gcp$">
+      <html>
+        <h1 style="color:#4D4D4D;font-size:50px;"><center>Google Cloud</center>
+        </h1>
+      </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Cloud Alerts</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Alerts.Alerts where NOT Alerts.severity=informational earliest=-48h latest=-24h 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true count from datamodel=Alerts.Alerts where NOT Alerts.severity=informational earliest=-24h latest=now] 
+| appendcols 
+    [| makeresults 
+    | eval time=now() 
+        ] 
+| rename time AS _time</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="height">70</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">0</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">inverse</option>
+        <option name="useColors">1</option>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_alerts</link>
+        </drilldown>
+      </single>
+    </panel>
+    <panel>
+      <title>Distinct Alert Messages</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true dc(Alerts.signature) from datamodel=Alerts.Alerts where NOT Alerts.severity=informational earliest=-48h latest=-24h 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true dc(Alerts.signature) from datamodel=Alerts.Alerts where NOT Alerts.severity=informational earliest=-24h latest=now] 
+| appendcols 
+    [| makeresults 
+    | eval time=now() 
+        ] 
+| rename time AS _time</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="height">70</option>
+        <option name="rangeColors">["0x53a051","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">0</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">inverse</option>
+        <option name="useColors">1</option>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_alerts</link>
+        </drilldown>
+      </single>
+    </panel>
+    <panel>
+      <title>Intrusion Alerts</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Intrusion_Detection.IDS_Attacks where NOT IDS_Attacks.severity=informational earliest=-48h latest=-24h 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true count from datamodel=Intrusion_Detection.IDS_Attacks where NOT IDS_Attacks.severity=informational earliest=-24h latest=now] 
+| appendcols 
+    [| makeresults 
+    | eval time=now() 
+        ] 
+| rename time AS _time</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="height">70</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">0</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">inverse</option>
+        <option name="useColors">1</option>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_ids</link>
+        </drilldown>
+      </single>
+    </panel>
+    <panel>
+      <title>Distinct Intrusion Signatures</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true dc(IDS_Attacks.signature) from datamodel=Intrusion_Detection.IDS_Attacks where NOT IDS_Attacks.severity=informational earliest=-48h latest=-24h 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true dc(IDS_Attacks.signature) from datamodel=Intrusion_Detection.IDS_Attacks where NOT IDS_Attacks.severity=informational earliest=-24h latest=now] 
+| appendcols 
+    [| makeresults 
+    | eval time=now() 
+        ] 
+| rename time AS _time</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="height">70</option>
+        <option name="rangeColors">["0x53a051","0x006d9c"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">0</option>
+        <option name="trendColorInterpretation">inverse</option>
+        <option name="useColors">1</option>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_ids</link>
+        </drilldown>
+      </single>
+    </panel>
+    <panel>
+      <title>Identities Monitored</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true dc(Authentication.user) from datamodel=Authentication where earliest=-48h latest=-24h 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true dc(Authentication.user) from datamodel=Authentication where earliest=-24h latest=now]
+| appendcols 
+    [| makeresults 
+    | eval time=now() 
+        ] 
+| rename time AS _time</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">all</option>
+        <option name="height">70</option>
+        <option name="rangeColors">["0xdc4e41","0x006d9c"]</option>
+        <option name="rangeValues">[10]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">0</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="useColors">1</option>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_access</link>
+        </drilldown>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Alerts by Severity</title>
+      <chart>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Alerts.Alerts by Alerts.severity 
+| rename Alerts.severity as severity
+| eval temp="" 
+| chart useother=true sum(count) over temp by severity 
+| rename temp as count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.integerUnits">1</option>
+        <option name="charting.axisTitleX.text">Severity</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.text">Alert count</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.chart">bar</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.fieldColors">{"critical": 0xD25B3B, "high": 0xFF8800, "medium": 0xF0BE1B, "low": 0xF8EE77, "informational": 0x006D9C, "unknown": 0x999999}</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisEnd</option>
+        <option name="charting.legend.placement">top</option>
+        <option name="height">300</option>
+        <option name="refresh.display">progressbar</option>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_alerts</link>
+        </drilldown>
+      </chart>
+    </panel>
+    <panel>
+      <title>Alerts over Time</title>
+      <chart>
+        <search>
+          <query>| tstats prestats=true summariesonly=true allow_old_summaries=true count from datamodel=Alerts.Alerts by _time, Alerts.severity span=10m 
+| rename Alerts.severity as severity
+| timechart minspan=10m count by severity</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.fieldColors">{"critical": 0xD25B3B, "high": 0xFF8800, "medium": 0xF0BE1B, "low": 0xF8EE77, "informational": 0x006D9C, "unknown": 0x999999}</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisEnd</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">top</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="height">300</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_alerts</link>
+        </drilldown>
+      </chart>
+    </panel>
+    <panel>
+      <title>Alert Sources over Time</title>
+      <chart>
+        <search>
+          <query>| tstats prestats=true summariesonly=true allow_old_summaries=true count from datamodel=Alerts.Alerts by _time, sourcetype span=1h 
+| lookup cloud_vendor_services sourcetype OUTPUT vendor, service
+| eval vendor=mvindex(vendor,0)
+| timechart minspan=1h count by vendor</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.fieldColors">{"AWS": 0xFF9900, "Azure": 0x008AD7, "GCP": 0x4285F4}</option>
+        <option name="charting.layout.splitSeries">1</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">1</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisEnd</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="height">300</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_alerts</link>
+        </drilldown>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>360 Overview by Total Count</title>
+      <viz type="punchcard_app.punchcard">
+        <title>Alerts, Failed Authentications, Blocked Traffic, IDS Alerts, Changes</title>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Authentication.Authentication where Authentication.action=fail* by _time, Authentication.action span=1h
+| rename Authentication.action as action 
+| eval action="Auth:".action 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true count from datamodel=Alerts.Alerts where NOT Alerts.severity=informational by _time, Alerts.severity span=1h
+    | rename Alerts.severity as severity 
+    | eval action="Alert:".severity ] 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true count from datamodel=Network_Traffic.All_Traffic where (All_Traffic.action=block* OR All_Traffic.action=drop*) by _time, All_Traffic.action span=1h 
+    | rename All_Traffic.action as action 
+    | eval action="FW Action:".action ] 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true count from datamodel=Intrusion_Detection.IDS_Attacks where NOT IDS_Attacks.severity=informational by _time, IDS_Attacks.severity span=1h 
+    | rename IDS_Attacks.severity as severity 
+    | eval action="IDS:".severity ] 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change.All_Changes where NOT All_Changes.action IN(unknown, allowed, read, success, failure, started, stopped, restarted) by _time, All_Changes.action span=1h 
+    | rename All_Changes.action as action 
+    | eval action="Change:".action ] 
+| sort _time 
+| eval _time=strftime(_time,"%I%p") 
+| eval count2=count</query>
+          <earliest>-23h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="height">280</option>
+        <option name="punchcard_app.punchcard.colorMode">sequential</option>
+        <option name="punchcard_app.punchcard.labelRotation">angle</option>
+        <option name="punchcard_app.punchcard.maxColor">#f1813f</option>
+        <option name="punchcard_app.punchcard.minColor">#999999</option>
+        <option name="punchcard_app.punchcard.numOfBins">5</option>
+        <option name="punchcard_app.punchcard.radiusScale">local</option>
+        <option name="punchcard_app.punchcard.useColors">true</option>
+        <option name="refresh.display">progressbar</option>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_360</link>
+        </drilldown>
+      </viz>
+    </panel>
+    <panel>
+      <title>360 Overview by Distinct Count of Sources + Destinations</title>
+      <viz type="punchcard_app.punchcard">
+        <title>Alerts, Failed Authentications, Blocked Traffic, IDS Alerts, Changes</title>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true dc(Authentication.src) as dc_src, dc(Authentication.dest) as dc_dest from datamodel=Authentication.Authentication where Authentication.action=fail* by _time, Authentication.action span=1h 
+| rename Authentication.action as action 
+| eval action="Auth:".action, dc=dc_src + dc_dest 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true dc(Alerts.src) as dc_src, dc(Alerts.dest) as dc_dest from datamodel=Alerts.Alerts where NOT Alerts.severity=informational by _time, Alerts.severity span=1h 
+    | rename Alerts.severity as severity 
+    | eval action="Alert Sev:".severity, dc=dc_src + dc_dest ] 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true dc(All_Traffic.src) as dc_src, dc(All_Traffic.dest) as dc_dest from datamodel=Network_Traffic.All_Traffic where (All_Traffic.action=block* OR All_Traffic.action=drop*) by _time, All_Traffic.action span=1h 
+    | rename All_Traffic.action as action 
+    | eval action="FW Action:".action, dc=dc_src + dc_dest ] 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true dc(IDS_Attacks.src) as dc_src, dc(IDS_Attacks.dest) as dc_dest from datamodel=Intrusion_Detection.IDS_Attacks where NOT IDS_Attacks.severity=informational by _time, IDS_Attacks.severity span=1h 
+    | rename IDS_Attacks.severity as severity 
+    | eval action="IDS Sev:".severity, dc=dc_src + dc_dest ] 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true dc(All_Changes.src) as dc_src, dc(All_Changes.dest) as dc_dest from datamodel=Change.All_Changes where NOT All_Changes.action IN(unknown, allowed, read, success, failure, started, stopped, restarted) by _time, All_Changes.action span=1h 
+    | rename All_Changes.action as action 
+    | eval action="Change:".action, dc=dc_src + dc_dest ] 
+| sort _time 
+| eval _time=strftime(_time,"%I%p") 
+| eval dc2=dc 
+| fields _time, action, dc, dc2</query>
+          <earliest>-23h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">all</option>
+        <option name="height">280</option>
+        <option name="punchcard_app.punchcard.colorMode">sequential</option>
+        <option name="punchcard_app.punchcard.labelRotation">angle</option>
+        <option name="punchcard_app.punchcard.maxColor">#006d9c</option>
+        <option name="punchcard_app.punchcard.minColor">#999999</option>
+        <option name="punchcard_app.punchcard.numOfBins">5</option>
+        <option name="punchcard_app.punchcard.radiusScale">local</option>
+        <option name="punchcard_app.punchcard.useColors">true</option>
+        <option name="refresh.display">progressbar</option>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_360</link>
+        </drilldown>
+      </viz>
+    </panel>
+  </row>
+</dashboard>

@@ -1,0 +1,146 @@
+<form version="1.1" theme="dark">
+  <label>360 View</label>
+  <fieldset submitButton="false">
+    <input type="time" token="field1">
+      <label></label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>360 View By Accounts: Event Types Over Time</title>
+      <chart>
+        <search>
+          <query>| tstats prestats=true summariesonly=true allow_old_summaries=true count from datamodel=Authentication.Authentication where Authentication.action=fail* by _time, Authentication.action span=10m 
+| rename Authentication.action as action 
+| eval action="Authentication:".action 
+| append 
+    [| tstats prestats=true summariesonly=true allow_old_summaries=true count, last(Alerts.severity) as value from datamodel=Alerts.Alerts where NOT Alerts.severity=informational by _time, Alerts.severity span=10m 
+    | rename Alerts.severity as severity 
+    | eval action="Alert:".severity] 
+| append 
+    [| tstats prestats=true summariesonly=true allow_old_summaries=true count, last(All_Traffic.action) as value from datamodel=Network_Traffic.All_Traffic where (All_Traffic.action=block* OR All_Traffic.action=drop*) by _time, All_Traffic.action span=10m 
+    | rename All_Traffic.action as action 
+    | eval action="Firewall Action:".action] 
+| append 
+    [| tstats prestats=true summariesonly=true allow_old_summaries=true count, last(IDS_Attacks.severity) as value from datamodel=Intrusion_Detection.IDS_Attacks where NOT IDS_Attacks.severity=informational by _time, IDS_Attacks.severity span=10m 
+    | rename IDS_Attacks.severity as severity 
+    | eval action="IDS Severity:".severity] 
+| append 
+    [| tstats prestats=true summariesonly=true allow_old_summaries=true count, last(Changes.action) as value from datamodel=Change.All_Changes where NOT All_Changes.action IN(unknown, allowed, read, success) by _time, All_Changes.action span=10m 
+    | rename All_Changes.action as action 
+    | eval action="Change:".action] 
+| timechart minspan=10m count by action limit=20</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisLabelsX.majorLabelVisibility">hide</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.axisTitleY2.visibility">collapsed</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="height">1222</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.scales.shared">0</option>
+        <option name="trellis.size">small</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>360 View By Host: Event Types Over Time</title>
+      <chart>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true dc(Authentication.src) as dc_src, dc(Authentication.dest) as dc_dest, last(Authentication.action) as value from datamodel=Authentication.Authentication where Authentication.action=fail* by _time, Authentication.action span=10m 
+| rename Authentication.action as action 
+| eval action="Auth:".action, dc=dc_src + dc_dest 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true dc(Alerts.src) as dc_src, dc(Alerts.dest) as dc_dest, last(Alerts.severity) as value from datamodel=Alerts.Alerts where NOT Alerts.severity=informational by _time, Alerts.severity span=10m 
+    | rename Alerts.severity as severity 
+    | eval action="Alerts:".severity, dc=dc_src + dc_dest ] 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true dc(All_Traffic.src) as dc_src, dc(All_Traffic.dest) as dc_dest, last(All_Traffic.action) as value from datamodel=Network_Traffic.All_Traffic where (All_Traffic.action=block* OR All_Traffic.action=drop*) by _time, All_Traffic.action span=10m 
+    | rename All_Traffic.action as action 
+    | eval action="FW Action:".action, dc=dc_src + dc_dest ] 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true dc(IDS_Attacks.src) as dc_src, dc(IDS_Attacks.dest) as dc_dest, last(IDS_Attacks.severity) as value from datamodel=Intrusion_Detection.IDS_Attacks where NOT IDS_Attacks.severity=informational by _time, IDS_Attacks.severity span=10m 
+    | rename IDS_Attacks.severity as severity 
+    | eval action="IDS Sev:".severity, dc=dc_src + dc_dest ] 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true dc(Malware_Attacks.src) as dc_src, dc(Malware_Attacks.dest) as dc_dest, last(Malware_Attacks.action) as value from datamodel=Malware.Malware_Attacks by _time, Malware_Attacks.action span=10m 
+    | rename Malware_Attacks.action as action 
+    | eval action="Malware:".action, dc=dc_src + dc_dest ] 
+| append 
+    [| tstats summariesonly=true allow_old_summaries=true dc(All_Changes.src) as dc_src, dc(All_Changes.dest) as dc_dest, last(All_Changes.action) as value from datamodel=Change.All_Changes where NOT All_Changes.action IN(unknown, allowed, read, success) by _time, All_Changes.action span=10m 
+    | rename All_Changes.action as action 
+    | eval action="Change:".action, dc=dc_src + dc_dest ] 
+| timechart minspan=10m sum(dc) as hosts by action limit=20</query>
+          <earliest>$field1.earliest$</earliest>
+          <latest>$field1.latest$</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisLabelsX.majorLabelVisibility">hide</option>
+        <option name="charting.axisTitleX.visibility">collapsed</option>
+        <option name="charting.axisTitleY.visibility">collapsed</option>
+        <option name="charting.axisTitleY2.visibility">collapsed</option>
+        <option name="charting.axisX.abbreviation">none</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.abbreviation">none</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.abbreviation">none</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.mode">standard</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="height">1224</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">1</option>
+        <option name="trellis.scales.shared">0</option>
+        <option name="trellis.size">small</option>
+      </chart>
+    </panel>
+  </row>
+</form>

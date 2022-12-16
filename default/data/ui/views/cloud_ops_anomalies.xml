@@ -1,0 +1,666 @@
+<dashboard version="1.1" hideFilters="true" theme="dark">
+  <label>Operation Anomalies</label>
+  <row>
+    <panel>
+      <title>Unusual Users Creating Instances</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` nodename=All_Changes.Instance_Changes OR nodename=All_Changes.Endpoint_Changes (All_Changes.action=created OR All_Changes.action=started) by _time, All_Changes.user, All_Changes.action span=10m 
+| rename "All_Changes.*" as * 
+| stats earliest(_time) as earliest latest(_time) as latest by user 
+| eval maxlatest=now() 
+| eval isOutlier=if(earliest &gt;= relative_time(maxlatest, "-24h"), 1, 0) 
+| where isOutlier=1
+| stats count</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">70</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">users</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Spike: Instances Launched by User</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` nodename=All_Changes.Instance_Changes OR nodename=All_Changes.Endpoint_Changes (All_Changes.action=created OR All_Changes.action=started) by _time, All_Changes.user span=1d 
+| rename "All_Changes.*" as * 
+| eval maxtime=now()
+| stats count as num_data_samples max(eval(if(_time &gt;= relative_time(maxtime, "-1d@d"), 'count', null))) as "count" avg(eval(if(_time&lt;relative_time(maxtime,"-1d@d"),'count',null))) as avg stdev(eval(if(_time&lt;relative_time(maxtime,"-24h"),'count',null))) as stdev by user
+| eval lower_bound=(avg-stdev*2), upper_bound=(avg+stdev*2) 
+| eval isOutlier=if(('count' &gt; upper_bound) AND num_data_samples &gt;=7, 1, 0) 
+| where isOutlier=1 
+| stats count</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">70</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,1]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">users</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Spike: API Calls by User</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` by _time, All_Changes.user span=1d 
+| rename All_Changes.* as * 
+| eval maxtime=now() 
+| stats count as num_data_samples max(eval(if(_time &gt;= relative_time(maxtime, "-24h"), 'count', null))) as "count" avg(eval(if(_time&lt;relative_time(maxtime,"-24h"), 'count', null))) as avg stdev(eval(if(_time&lt;relative_time(maxtime,"-24h"),'count',null))) as stdev by user 
+| eval lower_bound=(avg-stdev*2), upper_bound=(avg+stdev*2)
+| eval isOutlier=if(('count' &gt; upper_bound+2) AND num_data_samples &gt;=7, 1, 0) 
+| where isOutlier=1 
+| stats count</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">70</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,1]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">users</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>New API Calls for Accounts</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` NOT (nodename=All_Changes.Instance_Changes OR nodename=All_Changes.Endpoint_Changes) by _time, All_Changes.user, All_Changes.command span=10m 
+| rename "All_Changes.*" as * 
+| eventstats earliest(_time) as earliest latest(_time) as latest by user, command
+| eval maxlatest=now() 
+| where earliest &gt;= relative_time(maxlatest, "-24h")
+| stats dc(user)</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">70</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,1]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">users</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` nodename=All_Changes.Instance_Changes OR nodename=All_Changes.Endpoint_Changes (All_Changes.action=created OR All_Changes.action=started) by _time, All_Changes.user span=10m 
+| rename "All_Changes.*" as * 
+| eventstats earliest(_time) as earliest latest(_time) as latest by user 
+| eval maxlatest=now() 
+| eval isOutlier=if(earliest &gt;= relative_time(maxlatest, "-24h"), 1, 0) 
+| where isOutlier=1 
+| stats sum(count) as actions by user 
+| table user, actions 
+| sort - actions</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">5</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="actions">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="actions">
+          <option name="precision">0</option>
+        </format>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_user_investigation?drilldown_user=%22$click.value$%22</link>
+        </drilldown>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` nodename=All_Changes.Instance_Changes OR nodename=All_Changes.Endpoint_Changes (All_Changes.action=created OR All_Changes.action=started) by _time, All_Changes.user span=1d 
+| rename "All_Changes.*" as * 
+| eval maxtime=now()
+| stats count as num_data_samples max(eval(if(_time &gt;= relative_time(maxtime, "-1d@d"), 'count', null))) as "count" avg(eval(if(_time&lt;relative_time(maxtime,"-1d@d"),'count',null))) as avg stdev(eval(if(_time&lt;relative_time(maxtime,"-24h"),'count',null))) as stdev by user
+| eval lower_bound=(avg-stdev*2), upper_bound=(avg+stdev*2) 
+| eval isOutlier=if(('count' &gt; upper_bound) AND num_data_samples &gt;=7, 1, 0) 
+| where isOutlier=1 
+| table user, count, avg</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">5</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="count">
+          <option name="precision">0</option>
+        </format>
+        <format type="number" field="avg">
+          <option name="precision">0</option>
+        </format>
+        <format type="number" field="upper_bound">
+          <option name="precision">1</option>
+        </format>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_user_investigation?drilldown_user=$click.value$</link>
+        </drilldown>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` by _time, All_Changes.user, All_Changes.command span=1d 
+| rename All_Changes.* as * 
+| eval maxtime=now() 
+| stats count as num_data_samples max(eval(if(_time &gt;= relative_time(maxtime, "-24h"), 'count', null))) as "count" avg(eval(if(_time&lt;relative_time(maxtime,"-24h"), 'count', null))) as avg stdev(eval(if(_time&lt;relative_time(maxtime,"-24h"),'count',null))) as stdev by user, command 
+| eval lower_bound=(avg-stdev*2), upper_bound=(avg+stdev*2)
+| eval isOutlier=if(('count' &gt; upper_bound+2) AND num_data_samples &gt;=7, 1, 0) 
+| where isOutlier=1 
+| table user, command, count, avg</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">5</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="number" field="count">
+          <option name="precision">0</option>
+        </format>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="color" field="command">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="number" field="max">
+          <option name="precision">1</option>
+        </format>
+        <format type="number" field="avg">
+          <option name="precision">0</option>
+        </format>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_user_investigation?drilldown_user=$click.value$</link>
+        </drilldown>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` NOT (nodename=All_Changes.Instance_Changes OR nodename=All_Changes.Endpoint_Changes) by _time, All_Changes.user, All_Changes.command span=10m 
+| rename "All_Changes.*" as * 
+| eventstats earliest(_time) as earliest latest(_time) as latest by user, command
+| eval maxlatest=now() 
+| eval isOutlier=if(earliest &gt;= relative_time(maxlatest, "-24h"), 1, 0) 
+| where isOutlier=1 
+| stats sum(count) as count by user, command 
+| sort - count</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">5</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="color" field="command">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_user_investigation?drilldown_user=$click.value$</link>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Instances Provisioned from Unusual Location</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` nodename=All_Changes.Instance_Changes OR nodename=All_Changes.Endpoint_Changes (All_Changes.action=created OR All_Changes.action=started) by _time, All_Changes.action, All_Changes.src span=10m 
+| rename "All_Changes.*" as * 
+| iplocation src 
+| stats earliest(_time) as earliest latest(_time) as latest by Country, City, src
+| eval maxlatest=now() 
+| eval isOutlier=if(earliest &gt;= relative_time(maxlatest, "-24h"), 1, 0) 
+| where isOutlier=1 
+| stats count</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">70</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[0]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">source IPs</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Unusual Users Making API Calls</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` NOT (nodename=All_Changes.Instance_Changes OR nodename=All_Changes.Endpoint_Changes) by _time, All_Changes.user span=10m 
+| rename "All_Changes.*" as * 
+| stats earliest(_time) as earliest latest(_time) as latest by user 
+| eval maxlatest=now() 
+| eval isOutlier=if(earliest &gt;= relative_time(maxlatest, "-24h"), 1, 0) 
+| where isOutlier=1
+| stats count</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">70</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,1]</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">users</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Changes Made with Unusual User Agents</title>
+      <single>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` earliest=-30d by All_Changes.user_agent, All_Changes.src, All_Changes.dest, _time span=1h 
+| rename All_Changes."*" as "*" 
+| eventstats earliest(_time) as earliest by user_agent 
+| where earliest &gt;= relative_time(now(), "-24h") 
+| dedup src 
+| stats count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="drilldown">none</option>
+        <option name="height">70</option>
+        <option name="numberPrecision">0</option>
+        <option name="rangeColors">["0x53a051","0xf1813f","0xdc4e41"]</option>
+        <option name="rangeValues">[0,1]</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="underLabel">source IPs</option>
+        <option name="unitPosition">after</option>
+        <option name="useColors">1</option>
+        <option name="useThousandSeparators">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` nodename=All_Changes.Instance_Changes OR nodename=All_Changes.Endpoint_Changes (All_Changes.action=created OR All_Changes.action=started) by _time, All_Changes.action, All_Changes.src span=10m 
+| rename "All_Changes.*" as * 
+| iplocation src 
+| eventstats earliest(_time) as earliest latest(_time) as latest by Country
+| eval maxlatest=now() 
+| where earliest &gt;= relative_time(maxlatest, "-24h") 
+| stats count by src, Country, City
+| table src, count, Country, City 
+| sort - count</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">5</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="src">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="Country">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_asset_investigation?drilldown_host=$click.value$</link>
+        </drilldown>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` NOT (nodename=All_Changes.Instance_Changes OR nodename=All_Changes.Endpoint_Changes) by _time, All_Changes.user, All_Changes.src, All_Changes.command span=10m 
+| rename "All_Changes.*" as * 
+| eventstats earliest(_time) as earliest latest(_time) as latest by user 
+| eval maxlatest=now() 
+| where earliest &gt;= relative_time(maxlatest, "-24h") 
+| stats count by user, command 
+| sort - count</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">5</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="command">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_user_investigation?drilldown_user=$click.value$</link>
+        </drilldown>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` earliest=-30d by All_Changes.user_agent, All_Changes.src, All_Changes.dest, _time span=1h 
+| rename All_Changes."*" as "*" 
+| eventstats earliest(_time) as earliest by user_agent 
+| where earliest &gt;= relative_time(now(), "-24h") 
+| stats count by src, user_agent 
+| table src, count, user_agent 
+| sort - count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="count">5</option>
+        <option name="dataOverlayMode">none</option>
+        <option name="drilldown">cell</option>
+        <option name="percentagesRow">false</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">false</option>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#DC4E41" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="color" field="user_agent">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <format type="color" field="src">
+          <colorPalette type="sharedList"></colorPalette>
+          <scale type="sharedCategory"></scale>
+        </format>
+        <drilldown>
+          <link target="_blank">/app/InfoSec_Cloud_App_for_Splunk/cloud_asset_investigation?drilldown_host=$click.value$</link>
+        </drilldown>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <map>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` nodename=All_Changes.Instance_Changes OR nodename=All_Changes.Endpoint_Changes (All_Changes.action=created OR All_Changes.action=started) by _time, All_Changes.action, All_Changes.src span=10m 
+| rename "All_Changes.*" as * 
+| iplocation src 
+| eventstats earliest(_time) as earliest latest(_time) as latest by Country 
+| eval maxlatest=now()
+| where earliest &gt;= relative_time(maxlatest, "-24h")
+| geostats count by action</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="height">270</option>
+        <option name="mapping.choroplethLayer.colorBins">5</option>
+        <option name="mapping.choroplethLayer.colorMode">auto</option>
+        <option name="mapping.choroplethLayer.maximumColor">0xaf575a</option>
+        <option name="mapping.choroplethLayer.minimumColor">0x62b3b2</option>
+        <option name="mapping.choroplethLayer.neutralPoint">0</option>
+        <option name="mapping.choroplethLayer.shapeOpacity">0.75</option>
+        <option name="mapping.choroplethLayer.showBorder">1</option>
+        <option name="mapping.data.maxClusters">100</option>
+        <option name="mapping.legend.placement">bottomright</option>
+        <option name="mapping.map.center">(26.75,-29.18)</option>
+        <option name="mapping.map.panning">1</option>
+        <option name="mapping.map.scrollZoom">0</option>
+        <option name="mapping.map.zoom">1</option>
+        <option name="mapping.markerLayer.markerMaxSize">50</option>
+        <option name="mapping.markerLayer.markerMinSize">10</option>
+        <option name="mapping.markerLayer.markerOpacity">0.8</option>
+        <option name="mapping.showTiles">1</option>
+        <option name="mapping.tileLayer.maxZoom">7</option>
+        <option name="mapping.tileLayer.minZoom">0</option>
+        <option name="mapping.tileLayer.tileOpacity">1</option>
+        <option name="mapping.type">marker</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </map>
+    </panel>
+    <panel>
+      <map>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` NOT (nodename=All_Changes.Instance_Changes OR nodename=All_Changes.Endpoint_Changes) by _time, All_Changes.user, All_Changes.src, All_Changes.command span=10m 
+| rename "All_Changes.*" as * 
+| eventstats earliest(_time) as earliest latest(_time) as latest by user 
+| eval maxlatest=now() 
+| where earliest &gt;= relative_time(maxlatest, "-24h") 
+| iplocation src 
+| geostats count by user</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="height">270</option>
+        <option name="mapping.choroplethLayer.colorBins">5</option>
+        <option name="mapping.choroplethLayer.colorMode">auto</option>
+        <option name="mapping.choroplethLayer.maximumColor">0xaf575a</option>
+        <option name="mapping.choroplethLayer.minimumColor">0x62b3b2</option>
+        <option name="mapping.choroplethLayer.neutralPoint">0</option>
+        <option name="mapping.choroplethLayer.shapeOpacity">0.75</option>
+        <option name="mapping.choroplethLayer.showBorder">1</option>
+        <option name="mapping.data.maxClusters">100</option>
+        <option name="mapping.legend.placement">bottomright</option>
+        <option name="mapping.map.center">(26.75,-26.37)</option>
+        <option name="mapping.map.panning">1</option>
+        <option name="mapping.map.scrollZoom">0</option>
+        <option name="mapping.map.zoom">1</option>
+        <option name="mapping.markerLayer.markerMaxSize">50</option>
+        <option name="mapping.markerLayer.markerMinSize">10</option>
+        <option name="mapping.markerLayer.markerOpacity">0.8</option>
+        <option name="mapping.showTiles">1</option>
+        <option name="mapping.tileLayer.maxZoom">7</option>
+        <option name="mapping.tileLayer.minZoom">0</option>
+        <option name="mapping.tileLayer.tileOpacity">1</option>
+        <option name="mapping.type">marker</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </map>
+    </panel>
+    <panel>
+      <map>
+        <search>
+          <query>| tstats summariesonly=true allow_old_summaries=true count from datamodel=Change where `infosec-cloud-indexes` earliest=-30d by All_Changes.user_agent, All_Changes.src, All_Changes.dest, _time span=1h 
+| rename All_Changes."*" as "*" 
+| eventstats earliest(_time) as earliest by user_agent 
+| where earliest &gt;= relative_time(now(), "-24h") 
+| stats count by src, user_agent 
+| iplocation src
+| geostats count by user_agent</query>
+          <earliest>-30d@d</earliest>
+          <latest>now</latest>
+          <sampleRatio>1</sampleRatio>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="height">270</option>
+        <option name="mapping.choroplethLayer.colorBins">5</option>
+        <option name="mapping.choroplethLayer.colorMode">auto</option>
+        <option name="mapping.choroplethLayer.maximumColor">0xaf575a</option>
+        <option name="mapping.choroplethLayer.minimumColor">0x62b3b2</option>
+        <option name="mapping.choroplethLayer.neutralPoint">0</option>
+        <option name="mapping.choroplethLayer.shapeOpacity">0.75</option>
+        <option name="mapping.choroplethLayer.showBorder">1</option>
+        <option name="mapping.data.maxClusters">100</option>
+        <option name="mapping.legend.placement">bottomright</option>
+        <option name="mapping.map.center">(26.75,-26.37)</option>
+        <option name="mapping.map.panning">1</option>
+        <option name="mapping.map.scrollZoom">0</option>
+        <option name="mapping.map.zoom">1</option>
+        <option name="mapping.markerLayer.markerMaxSize">50</option>
+        <option name="mapping.markerLayer.markerMinSize">10</option>
+        <option name="mapping.markerLayer.markerOpacity">0.8</option>
+        <option name="mapping.showTiles">1</option>
+        <option name="mapping.tileLayer.maxZoom">7</option>
+        <option name="mapping.tileLayer.minZoom">0</option>
+        <option name="mapping.tileLayer.tileOpacity">1</option>
+        <option name="mapping.type">marker</option>
+        <option name="trellis.enabled">0</option>
+        <option name="trellis.scales.shared">1</option>
+        <option name="trellis.size">medium</option>
+      </map>
+    </panel>
+  </row>
+</dashboard>

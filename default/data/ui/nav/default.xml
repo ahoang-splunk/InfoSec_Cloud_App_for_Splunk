@@ -1,0 +1,46 @@
+<nav>
+    <view name="cloud_security_posture" default='true' />
+  
+    <collection label="Continuous Monitoring">
+        <view name="cloud_alerts" />
+        <view name="cloud_access" />
+        <view name="cloud_change" />
+        <view name="cloud_ids" />
+        <view name="cloud_network" />
+    </collection>
+  
+    <collection label="Advanced Threats">
+      	<view name="cloud_ops_anomalies" />
+	    <view name="cloud_access_anomalies" />
+	    <view name="cloud_network_anomalies" />
+	    <view name="cloud_custom_use_cases" />
+    </collection>
+  
+    <collection label="Investigation">
+	    <view name="cloud_user_investigation" />
+        <view name="cloud_asset_investigation" />
+    </collection>
+  
+    <view name="cloud_executive_view"/>
+  
+    <view name="cloud_infosec_alerts" />
+  
+    <view name="cloud_infosec_stats"/>
+  
+    <collection label="Search">
+	    <view name="search"  />
+        <view name="dashboards"  />
+        <collection label="Lookups (Requires Lookup Editor App)">
+            <a target="_blank" href="/app/lookup_editor/lookup_edit?namespace=InfoSec_Cloud_App_for_Splunk&amp;lookup=infosec_hosts&amp;type=kv">Host Lookup</a>
+            <a target="_blank" href="/app/lookup_editor/lookup_edit?namespace=InfoSec_Cloud_App_for_Splunk&amp;lookup=infosec_users&amp;type=kv">User Lookup</a>
+        </collection>
+      	<collection label="Experimental Dashboards">
+	  		<view name="cloud_assets_and_identities" />
+        </collection>
+    </collection>
+
+    <collection label="Help">
+        <a target="_blank" href="/app/InfoSec_Cloud_App_for_Splunk/cloud_infosec_setup">Setup and Troubleshooting</a>
+        <a target="_blank" href="/app/InfoSec_Cloud_App_for_Splunk/cloud_help_resources">Additional Resources</a>
+    </collection>
+</nav>

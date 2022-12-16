@@ -1,0 +1,22 @@
+<form version="1.1" theme="dark">
+  <label>Custom Use Cases</label>
+  <fieldset submitButton="false">
+    <input type="time" token="field1">
+      <label></label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <html>
+        <p></p>
+        <p>This is a dashboard you can add your custom reports to. You can explore hundreds of additional security use cases available in the free <a target="_blank" href="https://splunkbase.splunk.com/app/3435/">Splunk Security Essentials app</a>.<br/> 
+        Some of the common use cases from Security Essentials app are already implemented in this InfoSec Cloud app under Advanced Threats.
+        </p>
+      </html>
+    </panel>
+  </row>
+</form>
