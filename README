@@ -6,8 +6,6 @@ Welcome to InfoSec App for Splunk
 
 PREREQUISITES - IMPORTANT: WITHOUT THESE, THE APP WILL NOT BE OF MUCH USE
 
-- At a minimum, you should have data from the following _______ sources collected by your Splunk environment:
-	- 
 
 - The following free Splunk Add-ons must be installed before you can start using InfoSec App:
 	- Splunk Common Information Model (CIM): https://splunkbase.splunk.com/app/1621/
